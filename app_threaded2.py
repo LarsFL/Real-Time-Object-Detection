@@ -13,10 +13,9 @@ PATH_TO_CKPT = 'models/' + MODEL_NAME + '/frozen_inference_graph.pb'
 # List of the strings that is used to add correct label for each box.
 CWD_PATH = os.getcwd()
 PATH_TO_LABELS = os.path.join(CWD_PATH,'object_detection', 'data', 'mscoco_label_map.pbtxt')
-print(PATH_TO_LABELS)
 NUM_CLASSES = 90
-IMAGE_WIDTH = 640
-IMAGE_HEIGHT = 480
+IMAGE_WIDTH = 1920
+IMAGE_HEIGHT = 1080
 
 class OutputFrame:
     def __init__(self):
@@ -74,8 +73,8 @@ if __name__ == "__main__":
     done = False
     detection_graph = tf.Graph()
     with detection_graph.as_default():
-        od_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
+        od_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(PATH_TO_CKPT, 'rb') as fid:
             serialized_graph = fid.read()
             od_graph_def.ParseFromString(serialized_graph)
             tf.import_graph_def(od_graph_def, name='')
@@ -85,11 +84,9 @@ if __name__ == "__main__":
     category_index = label_map_util.create_category_index(categories)
 
     cap = cv2.VideoCapture(0)
-    fourcc = cv2.VideoWriter_fourcc('a', 'v', 'c', '1') # note the lower case
-    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480), True)
     cap.set(3, IMAGE_WIDTH)
     cap.set(4, IMAGE_HEIGHT)
-    sess = tf.Session(graph=detection_graph)
+    sess = tf.compat.v1.Session(graph=detection_graph)
     output_frame = OutputFrame()
 
     webcam_thread = WebcamThread("Webcam Thread")
@@ -112,11 +109,9 @@ if __name__ == "__main__":
               line_thickness=8)
 
         cv2.imshow('frame', to_show)
-        out.write((to_show).astype('u1'))
         if cv2.waitKey(1) & 0xFF == ord('q'):
             done = True
             break
 
     cap.release()
-    out.release()
     cv2.destroyAllWindows()
