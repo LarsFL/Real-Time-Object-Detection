@@ -333,7 +333,9 @@ def visualize_boxes_and_labels_on_image_array(image,
                                               max_boxes_to_draw=20,
                                               min_score_thresh=.5,
                                               agnostic_mode=False,
-                                              line_thickness=4):
+                                              line_thickness=4,
+                                              width=1920,
+                                              height=1080):
   """Overlay labeled boxes on an image with formatted scores and label names.
 
   This function groups boxes that correspond to the same location
@@ -368,6 +370,7 @@ def visualize_boxes_and_labels_on_image_array(image,
   # that correspond to the same location.
   box_to_display_str_map = collections.defaultdict(list)
   box_to_color_map = collections.defaultdict(str)
+  box_cat_map = collections.defaultdict(str)
   box_to_instance_masks_map = {}
   box_to_keypoints_map = collections.defaultdict(list)
   if not max_boxes_to_draw:
@@ -390,6 +393,9 @@ def visualize_boxes_and_labels_on_image_array(image,
           display_str = '{}: {}%'.format(
               class_name,
               int(100*scores[i]))
+          if class_name == "cat":
+            print("Cat found")
+            box_cat_map[box] = 'Catt'
         else:
           display_str = 'score: {}%'.format(int(100 * scores[i]))
         box_to_display_str_map[box].append(display_str)
@@ -425,3 +431,8 @@ def visualize_boxes_and_labels_on_image_array(image,
           color=color,
           radius=line_thickness / 2,
           use_normalized_coordinates=use_normalized_coordinates)
+
+  # Draw all boxes onto image.
+  for box, color in six.iteritems(box_cat_map):
+    ymin, xmin, ymax, xmax = box
+    return [int(ymin * height), int(xmin * width), int(ymax * height), int(xmax * width)]

@@ -70,6 +70,14 @@ def predict(threadName):
 
 
 if __name__ == "__main__":
+    currentCrop = [0, 1000, 0, 1000]
+    centerX, centerY = 500, 500
+    targetX, targetY = 500, 500
+    largestDim, targetDim = 250, 250
+    lastTargetId = 0
+    lostTargetCount = 0
+    catBox = None
+
     done = False
     detection_graph = tf.Graph()
     with detection_graph.as_default():
@@ -99,15 +107,51 @@ if __name__ == "__main__":
             to_show = output_frame.frame
         else:
             to_show = output_frame.frame
-            vis_util.visualize_boxes_and_labels_on_image_array(
+            catBox = vis_util.visualize_boxes_and_labels_on_image_array(
               to_show,
               np.squeeze(output_frame.boxes[0]),
               np.squeeze(output_frame.boxes[2]).astype(np.int32),
               np.squeeze(output_frame.boxes[1]),
               category_index,
               use_normalized_coordinates=True,
-              line_thickness=8)
+              line_thickness=8,
+              width=IMAGE_WIDTH,
+              height=IMAGE_HEIGHT)
 
+        if catBox:
+            print(catBox)
+            targetX = int((catBox[1] + catBox[3]) / 2)
+            targetY = int((catBox[0] + catBox[2]) / 2)
+            targetDim = int(max([int(catBox[3]) - int(catBox[1]), int(catBox[2]) - int(catBox[0])]) * 1.5)
+
+        centerX = int(centerX * .97 + targetX * .03)
+        centerY = int(centerY * .97 + targetY * .03)
+        largestDim = int(largestDim * .97 + targetDim * .03)
+        
+        startY = centerY - largestDim / 2
+        endY = centerY + largestDim / 2
+        startX = centerX - largestDim / 2
+        endX = centerX + largestDim / 2
+
+        # Keep camera within frame boundries
+        if startY <= 0 or endY >= IMAGE_HEIGHT:
+            if startY <= 0:
+                endY += (0 - startY)
+                startY = 0
+            else:
+                startY -= (endY - IMAGE_HEIGHT)
+                endY = IMAGE_HEIGHT
+        if startX <= 0 or endX >= IMAGE_WIDTH:
+            if startX <= 0:
+                endX += (0 - startX)
+                startX = 0
+            else:
+                startX -= (endX - IMAGE_WIDTH)
+                endX = IMAGE_WIDTH
+        currentCrop = [int(startY), int(endY), int(startX), int(endX)]
+        imgTest = to_show[currentCrop[0]: currentCrop[1], currentCrop[2]: currentCrop[3]]
+        resizedImgTest = cv2.resize(imgTest, (500, 500), interpolation=cv2.INTER_AREA)
+        
         cv2.imshow('frame', to_show)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             done = True
