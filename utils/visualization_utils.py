@@ -393,7 +393,7 @@ def visualize_boxes_and_labels_on_image_array(image,
           display_str = '{}: {}%'.format(
               class_name,
               int(100*scores[i]))
-          if class_name == "cat":
+          if class_name == "person":
             print("Cat found")
             box_cat_map[box] = 'Catt'
         else:

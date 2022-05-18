@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import cv2
 import os
@@ -70,6 +71,12 @@ def predict(threadName):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', type=int, default=0, help='The video source')
+    parser.add_argument('--crop', action='store_true', help='Crop video to cats')
+    opt = parser.parse_args()
+
+    source, crop = opt.source, opt.crop
     currentCrop = [0, 1000, 0, 1000]
     centerX, centerY = 500, 500
     targetX, targetY = 500, 500
@@ -91,7 +98,7 @@ if __name__ == "__main__":
     categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
     category_index = label_map_util.create_category_index(categories)
 
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(source)
     cap.set(3, IMAGE_WIDTH)
     cap.set(4, IMAGE_HEIGHT)
     sess = tf.compat.v1.Session(graph=detection_graph)
@@ -152,7 +159,11 @@ if __name__ == "__main__":
         imgTest = to_show[currentCrop[0]: currentCrop[1], currentCrop[2]: currentCrop[3]]
         resizedImgTest = cv2.resize(imgTest, (500, 500), interpolation=cv2.INTER_AREA)
         
-        cv2.imshow('frame', to_show)
+        if crop:
+            cv2.imshow('frame', resizedImgTest)
+        else:
+            cv2.imshow('frame', to_show)
+            
         if cv2.waitKey(1) & 0xFF == ord('q'):
             done = True
             break
