@@ -84,6 +84,8 @@ if __name__ == "__main__":
     lastTargetId = 0
     lostTargetCount = 0
     catBox = None
+    firstTargetX, firstTargetY, firstTargetDim = 0, 0, 0
+    secondTargetX, secondTargetY, secondTargetDim = 0, 0, 0
 
     done = False
     detection_graph = tf.Graph()
@@ -114,7 +116,7 @@ if __name__ == "__main__":
             to_show = output_frame.frame
         else:
             to_show = output_frame.frame
-            catBox = vis_util.visualize_boxes_and_labels_on_image_array(
+            catBoxes = vis_util.visualize_boxes_and_labels_on_image_array(
               to_show,
               np.squeeze(output_frame.boxes[0]),
               np.squeeze(output_frame.boxes[2]).astype(np.int32),
@@ -125,20 +127,59 @@ if __name__ == "__main__":
               width=IMAGE_WIDTH,
               height=IMAGE_HEIGHT)
 
-        if catBox:
-            print(catBox)
-            targetX = int((catBox[1] + catBox[3]) / 2)
-            targetY = int((catBox[0] + catBox[2]) / 2)
-            targetDim = int(max([int(catBox[3]) - int(catBox[1]), int(catBox[2]) - int(catBox[0])]) * 1.5)
+            firstTargetX, firstTargetY, firstTargetDim, secondTargetX, secondTargetY, secondTargetDim = 0,0,0,0,0,0
+            if catBoxes and len(catBoxes) != 0:
+                firstTargetX = int((catBoxes[0][1] + catBoxes[0][3]) / 2)
+                firstTargetY = int((catBoxes[0][0] + catBoxes[0][2]) / 2)
+                firstTargetDim = int(max([int(catBoxes[0][3]) - int(catBoxes[0][1]), int(catBoxes[0][2]) - int(catBoxes[0][0])]) * 1.3)
+                if len(catBoxes) > 1:
+                    secondTargetX = int((catBoxes[1][1] + catBoxes[1][3]) / 2)
+                    secondTargetY = int((catBoxes[1][0] + catBoxes[1][2]) / 2)
+                    secondTargetDim = int(max([int(catBoxes[1][3]) - int(catBoxes[1][1]), int(catBoxes[1][2]) - int(catBoxes[1][0])]) * 1.3)
 
-        centerX = int(centerX * .97 + targetX * .03)
-        centerY = int(centerY * .97 + targetY * .03)
-        largestDim = int(largestDim * .97 + targetDim * .03)
-        
-        startY = centerY - largestDim / 2
-        endY = centerY + largestDim / 2
-        startX = centerX - largestDim / 2
-        endX = centerX + largestDim / 2
+            if (secondTargetX == 0 and lostTargetCount == 0 and firstTargetX != 0):
+                print("Changing value")
+                targetX = firstTargetX
+                targetY = firstTargetY
+                targetDim = firstTargetDim
+
+            if (secondTargetX != 0):
+                if (abs(secondTargetX - firstTargetX) < (.3 * IMAGE_WIDTH) and abs(secondTargetY - firstTargetY) < (.3 * IMAGE_HEIGHT)):
+                    lostTargetCount = 2
+                    targetX = int((firstTargetX + secondTargetX) / 2)
+                    targetY = int((firstTargetY + secondTargetY) / 2)
+                    targetDim = int(max(firstTargetDim, secondTargetDim) * 1.85)
+                else:
+                    targetX = firstTargetX
+                    targetY = firstTargetY
+                    targetDim = firstTargetDim
+                    lostTargetCount = lostTargetCount - 1 if lostTargetCount != 0 else 0
+            
+            if (secondTargetX == 0 and lostTargetCount > 0):
+                lostTargetCount -= 1
+
+        newCenterX = int(centerX * .98 + targetX * .02)
+        if newCenterX - centerX > 10:
+            newCenterX = centerX + 10
+        elif centerX - newCenterX > 10:
+            newCenterX = centerX - 10
+        newCenterY = int(centerY * .98 + targetY * .02)
+        if newCenterY - centerY > 10:
+            newCenterY = centerY + 10
+        elif centerY - newCenterY > 10:
+            newCenterY = centerY - 10
+        newLargestDim = int(largestDim * .98 + targetDim * .02)
+        if newLargestDim - largestDim > 10:
+            newLargestDim = largestDim + 10
+        elif largestDim - newLargestDim > 10:
+            newLargestDim = largestDim - 10
+        centerX, centerY, largestDim = newCenterX, newCenterY, newLargestDim
+
+
+        startY = int(centerY - largestDim / 2)
+        endY = int(centerY + largestDim / 2)
+        startX = int(centerX - largestDim / 2)
+        endX = int(centerX + largestDim / 2)
 
         # Keep camera within frame boundries
         if startY <= 0 or endY >= IMAGE_HEIGHT:
@@ -156,6 +197,7 @@ if __name__ == "__main__":
                 startX -= (endX - IMAGE_WIDTH)
                 endX = IMAGE_WIDTH
         currentCrop = [int(startY), int(endY), int(startX), int(endX)]
+        print(currentCrop)
         imgTest = to_show[currentCrop[0]: currentCrop[1], currentCrop[2]: currentCrop[3]]
         resizedImgTest = cv2.resize(imgTest, (500, 500), interpolation=cv2.INTER_AREA)
         

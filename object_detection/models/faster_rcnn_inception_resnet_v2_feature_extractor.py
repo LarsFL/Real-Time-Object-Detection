@@ -189,7 +189,7 @@ class FasterRCNNInceptionResnetV2FeatureExtractor(
         feature extractor.
 
     Returns:
-      a callable which takes a tf.Session as input and loads a checkpoint when
+      a callable which takes a tf.compat.v1.Session as input and loads a checkpoint when
         run.
     """
     variables_to_restore = {}
