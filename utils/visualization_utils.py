@@ -335,7 +335,8 @@ def visualize_boxes_and_labels_on_image_array(image,
                                               agnostic_mode=False,
                                               line_thickness=4,
                                               width=1920,
-                                              height=1080):
+                                              height=1080,
+                                              crop=False):
   """Overlay labeled boxes on an image with formatted scores and label names.
 
   This function groups boxes that correspond to the same location
@@ -393,8 +394,7 @@ def visualize_boxes_and_labels_on_image_array(image,
           display_str = '{}: {}%'.format(
               class_name,
               int(100*scores[i]))
-          if class_name == "dog" or class_name == "cat":
-            print("Cat found")
+          if class_name == "dog" or class_name == "cat" or class_name == "teddy bear":
             box_cat_map[box] = 'Catt'
         else:
           display_str = 'score: {}%'.format(int(100 * scores[i]))
@@ -406,31 +406,32 @@ def visualize_boxes_and_labels_on_image_array(image,
               classes[i] % len(STANDARD_COLORS)]
 
   # Draw all boxes onto image.
-  # for box, color in six.iteritems(box_to_color_map):
-  #   ymin, xmin, ymax, xmax = box
-  #   if instance_masks is not None:
-  #     draw_mask_on_image_array(
-  #         image,
-  #         box_to_instance_masks_map[box],
-  #         color=color
-  #     )
-  #   draw_bounding_box_on_image_array(
-  #       image,
-  #       ymin,
-  #       xmin,
-  #       ymax,
-  #       xmax,
-  #       color=color,
-  #       thickness=line_thickness,
-  #       display_str_list=box_to_display_str_map[box],
-  #       use_normalized_coordinates=use_normalized_coordinates)
-  #   if keypoints is not None:
-  #     draw_keypoints_on_image_array(
-  #         image,
-  #         box_to_keypoints_map[box],
-  #         color=color,
-  #         radius=line_thickness / 2,
-  #         use_normalized_coordinates=use_normalized_coordinates)
+  if not crop:
+    for box, color in six.iteritems(box_to_color_map):
+      ymin, xmin, ymax, xmax = box
+      if instance_masks is not None:
+        draw_mask_on_image_array(
+            image,
+            box_to_instance_masks_map[box],
+            color=color
+        )
+      draw_bounding_box_on_image_array(
+          image,
+          ymin,
+          xmin,
+          ymax,
+          xmax,
+          color=color,
+          thickness=line_thickness,
+          display_str_list=box_to_display_str_map[box],
+          use_normalized_coordinates=use_normalized_coordinates)
+      if keypoints is not None:
+        draw_keypoints_on_image_array(
+            image,
+            box_to_keypoints_map[box],
+            color=color,
+            radius=line_thickness / 2,
+            use_normalized_coordinates=use_normalized_coordinates)
 
   catBoxes = []
   # Draw all boxes onto image.

@@ -111,6 +111,8 @@ if __name__ == "__main__":
     webcam_thread.start()
     predictor_thread.start()
 
+    print("---- Starting CatTracker ----")
+
     while True:
         if output_frame.boxes == ():
             to_show = output_frame.frame
@@ -125,7 +127,8 @@ if __name__ == "__main__":
               use_normalized_coordinates=True,
               line_thickness=8,
               width=IMAGE_WIDTH,
-              height=IMAGE_HEIGHT)
+              height=IMAGE_HEIGHT,
+              crop=crop)
 
             firstTargetX, firstTargetY, firstTargetDim, secondTargetX, secondTargetY, secondTargetDim = 0,0,0,0,0,0
             if catBoxes and len(catBoxes) != 0:
@@ -138,7 +141,6 @@ if __name__ == "__main__":
                     secondTargetDim = int(max([int(catBoxes[1][3]) - int(catBoxes[1][1]), int(catBoxes[1][2]) - int(catBoxes[1][0])]) * 1.3)
 
             if (secondTargetX == 0 and lostTargetCount == 0 and firstTargetX != 0):
-                print("Changing value")
                 targetX = firstTargetX
                 targetY = firstTargetY
                 targetDim = firstTargetDim
@@ -196,8 +198,7 @@ if __name__ == "__main__":
             else:
                 startX -= (endX - IMAGE_WIDTH)
                 endX = IMAGE_WIDTH
-        currentCrop = [int(startY), int(endY), int(startX), int(endX)]
-        print(currentCrop)
+        currentCrop = [int(max(0, startY)), int(min(IMAGE_HEIGHT, endY)), int(max(0, startX)), int(min(IMAGE_WIDTH, endX))]
         imgTest = to_show[currentCrop[0]: currentCrop[1], currentCrop[2]: currentCrop[3]]
         resizedImgTest = cv2.resize(imgTest, (500, 500), interpolation=cv2.INTER_AREA)
         
